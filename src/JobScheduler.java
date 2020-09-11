@@ -10,12 +10,24 @@ public class JobScheduler extends PriorityQueue<Job> {
 
     private static int globalTime = 0;
 
-    public static void main(String[] args) throws FileNotFoundException {
-        BufferedReader input = new BufferedReader(new FileReader("input.txt"));
-        fillJobsToWaitlist(input, waitList);
+    public static void main(String[] args) {
+        String inputName = args[0];
+        BufferedReader file = null;
+        boolean hasInput = false;
+        while(!hasInput) {
+            try {
+                file = new BufferedReader(new FileReader(inputName));
+                hasInput = true;
+            } catch (FileNotFoundException f) {
+                System.out.println("File was not found");
+
+            }
+        }
+
+        fillJobsToWaitlist(file, waitList);
 
         JobScheduler scheduler = new JobScheduler();
-        input.lines().forEach(l -> scheduler.push(Job.convertToJob(l)));
+        file.lines().forEach(l -> scheduler.push(Job.convertToJob(l)));
 
         waitListTimer.schedule(new AddJobsFromWaitList(scheduler), 0, 1000);
         schedulerTimer.schedule(new incrementGlobalTimer(), 1000, 1000);
