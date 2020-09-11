@@ -1,6 +1,3 @@
-import java.util.Arrays;
-import java.util.Timer;
-
 public class Job implements Comparable<Job>{
     private int jobNumber;
     private int priority;
@@ -71,13 +68,7 @@ public class Job implements Comparable<Job>{
 
     @Override
     public int compareTo(Job other) {
-        if(getPriority() == other.getPriority()) {
-            return 0;
-        } else if(getPriority() > other.getPriority()) {
-            return 1;
-        } else {
-            return -1;
-        }
+        return Integer.compare(getPriority(), other.getPriority());
     }
 
     @Override

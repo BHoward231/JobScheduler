@@ -1,38 +1,38 @@
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class JobScheduler extends PriorityQueue<Job> {
-    private static final Timer timer = new Timer();
+    private static final Timer schedulerTimer = new Timer();
+    private static final Timer waitListTimer = new Timer();
+    private static final ArrayList<Job> waitList = new ArrayList<>();
     private static long lastTimestamp = 0;
-    private static BufferedReader input;
+
+    private static int globalTime = 0;
 
     public static void main(String[] args) throws FileNotFoundException {
-        input = new BufferedReader(new FileReader("input.txt"));
-        JobScheduler scheduler = new JobScheduler();
-//        Job j1 = new Job(1, 3, 34, 5);
-//        Job j2 = new Job(2, 5, 34, 4);
-//        Job j3 = new Job(3, 2, 34, 3);
-//        Job j4 = new Job(4, 2, 34, 2);
-//        scheduler.push(j1);
-//        scheduler.push(j2);
-//        scheduler.push(j3);
-//        scheduler.push(j4);
-        input.lines().forEach(l -> {
-            System.out.println("line");
-            scheduler.push(Job.convertToJob(l));
-        });
+        BufferedReader input = new BufferedReader(new FileReader("input.txt"));
+        fillJobsToWaitlist(input, waitList);
 
-        lastTimestamp = System.currentTimeMillis();
-        timer.schedule(new RunJob(scheduler), 0, 1000);
+        JobScheduler scheduler = new JobScheduler();
+
+        waitListTimer.schedule(new AddJobsFromWaitList(scheduler), 0, 1000);
+        schedulerTimer.schedule(new incrementGlobalTimer(), 1000, 1000);
+        schedulerTimer.schedule(new RunJobFromScheduler(scheduler), 0, 1000);
     }
 
-    static class RunJob extends TimerTask {
+    static class incrementGlobalTimer extends TimerTask {
+        @Override
+        public void run() {
+            globalTime++;
+        }
+    }
+
+    static class RunJobFromScheduler extends TimerTask {
         JobScheduler scheduler;
 
-        public RunJob(JobScheduler scheduler) {
+        public RunJobFromScheduler(JobScheduler scheduler) {
             this.scheduler = scheduler;
         }
 
@@ -40,7 +40,9 @@ public class JobScheduler extends PriorityQueue<Job> {
         public void run() {
             long waitingTime, executionTime;
             if(scheduler.isEmpty()) {
-                timer.cancel();
+                if(waitList.isEmpty()) {
+                    schedulerTimer.cancel();
+                }
             } else {
                 Job currentJob = scheduler.pop();
                 System.out.println("Currently Working On: " + currentJob);
@@ -60,5 +62,62 @@ public class JobScheduler extends PriorityQueue<Job> {
                 System.out.println("-----------------------------------------");
             }
         }
+    }
+
+    static class AddJobsFromWaitList extends TimerTask {
+        JobScheduler scheduler;
+
+        public AddJobsFromWaitList(JobScheduler scheduler) {
+            this.scheduler = scheduler;
+        }
+
+        @Override
+        public void run() {
+            if(waitList.isEmpty()) {
+                waitListTimer.cancel();
+            } else {
+                boolean jobAvailable = waitList.get(0).getArrivalTime() <= globalTime;
+                while(jobAvailable) {
+                    lastTimestamp = System.currentTimeMillis();
+                    scheduler.push(waitList.remove(0));
+                    jobAvailable = (!waitList.isEmpty() && waitList.get(0).getArrivalTime() <= globalTime);
+                }
+            }
+        }
+    }
+
+    private static void quickSort(ArrayList<Job> jobs, int begin, int end) {
+        if(begin < end) {
+            int index = partition(jobs, begin, end);
+
+            quickSort(jobs, begin, index-1);
+            quickSort(jobs, index+1, end);
+        }
+    }
+
+    private static int partition(ArrayList<Job> jobs, int begin, int end) {
+        int pivot = jobs.get(end).getArrivalTime();
+        int i = (begin - 1);
+
+        for(int j = begin; j < end; j++) {
+            if(jobs.get(j).getArrivalTime() <= pivot) {
+                i++;
+
+                Job swapTmp = jobs.get(i);
+                jobs.set(i, jobs.get(j));
+                jobs.set(j, swapTmp);
+            }
+        }
+
+        Job swapTmp = jobs.get(i + 1);
+        jobs.set(i + 1, jobs.get(end));
+        jobs.set(end, swapTmp);
+
+        return i + 1;
+    }
+
+    public static void fillJobsToWaitlist(BufferedReader input, ArrayList<Job> waitList) {
+        input.lines().forEach(l -> waitList.add(Job.convertToJob(l)));
+        quickSort(waitList, 0, waitList.size() - 1);
     }
 }
