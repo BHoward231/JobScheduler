@@ -1,11 +1,10 @@
-import java.util.Arrays;
-import java.util.Timer;
-
 public class Job implements Comparable<Job>{
     private int jobNumber;
     private int priority;
     private int arrivalTime;
     private int duration;
+    private int timeAvailable = 0;
+    private int timeAtStart = -1;
 
     public Job(int jobNumber, int priority, int arrivalTime, int duration) {
         this.jobNumber = jobNumber;
@@ -28,6 +27,22 @@ public class Job implements Comparable<Job>{
 
     public int getPriority() {
         return priority;
+    }
+
+    public int getTimeAvailable() {
+        return timeAvailable;
+    }
+
+    public int getTimeAtStart() {
+        return timeAtStart;
+    }
+
+    public void setTimeAtStart(int timeAtStart) {
+        this.timeAtStart = timeAtStart;
+    }
+
+    public void setTimeAvailable(int timeAvailable) {
+        this.timeAvailable = timeAvailable;
     }
 
     public void setArrivalTime(int arrivalTime) {
@@ -71,13 +86,7 @@ public class Job implements Comparable<Job>{
 
     @Override
     public int compareTo(Job other) {
-        if(getPriority() == other.getPriority()) {
-            return 0;
-        } else if(getPriority() > other.getPriority()) {
-            return 1;
-        } else {
-            return -1;
-        }
+        return Integer.compare(getPriority(), other.getPriority());
     }
 
     @Override
