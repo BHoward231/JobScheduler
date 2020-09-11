@@ -3,6 +3,8 @@ public class Job implements Comparable<Job>{
     private int priority;
     private int arrivalTime;
     private int duration;
+    private int timeAvailable = 0;
+    private int timeAtStart = -1;
 
     public Job(int jobNumber, int priority, int arrivalTime, int duration) {
         this.jobNumber = jobNumber;
@@ -25,6 +27,22 @@ public class Job implements Comparable<Job>{
 
     public int getPriority() {
         return priority;
+    }
+
+    public int getTimeAvailable() {
+        return timeAvailable;
+    }
+
+    public int getTimeAtStart() {
+        return timeAtStart;
+    }
+
+    public void setTimeAtStart(int timeAtStart) {
+        this.timeAtStart = timeAtStart;
+    }
+
+    public void setTimeAvailable(int timeAvailable) {
+        this.timeAvailable = timeAvailable;
     }
 
     public void setArrivalTime(int arrivalTime) {
