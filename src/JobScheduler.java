@@ -14,6 +14,7 @@ public class JobScheduler extends PriorityQueue<Job> {
         String inputName = args[0];
         BufferedReader file = null;
         boolean hasInput = false;
+        //takes file from command line to argument
         while(!hasInput) {
             try {
                 file = new BufferedReader(new FileReader(inputName));
@@ -26,6 +27,7 @@ public class JobScheduler extends PriorityQueue<Job> {
 
         fillJobsToWaitlist(file, waitList);
 
+        //creates scheduler
         JobScheduler scheduler = new JobScheduler();
         file.lines().forEach(l -> scheduler.push(Job.convertToJob(l)));
 
