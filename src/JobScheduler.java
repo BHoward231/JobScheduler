@@ -7,7 +7,6 @@ public class JobScheduler extends PriorityQueue<Job> {
     private static final Timer schedulerTimer = new Timer();
     private static final Timer waitListTimer = new Timer();
     private static final ArrayList<Job> waitList = new ArrayList<>();
-    private static long lastTimestamp = 0;
 
     private static int globalTime = 0;
 
@@ -16,6 +15,7 @@ public class JobScheduler extends PriorityQueue<Job> {
         fillJobsToWaitlist(input, waitList);
 
         JobScheduler scheduler = new JobScheduler();
+        input.lines().forEach(l -> scheduler.push(Job.convertToJob(l)));
 
         waitListTimer.schedule(new AddJobsFromWaitList(scheduler), 0, 1000);
         schedulerTimer.schedule(new incrementGlobalTimer(), 1000, 1000);
@@ -38,27 +38,26 @@ public class JobScheduler extends PriorityQueue<Job> {
 
         @Override
         public void run() {
-            long waitingTime, executionTime;
             if(scheduler.isEmpty()) {
                 if(waitList.isEmpty()) {
                     schedulerTimer.cancel();
                 }
             } else {
                 Job currentJob = scheduler.pop();
+                if(currentJob.getTimeAtStart() == -1) {
+                    currentJob.setTimeAtStart(globalTime);
+                    System.out.println("Added Job Number " + currentJob.getJobNumber() + " to the queue");
+                    System.out.println("The waiting time(MS) of that job was: " + (globalTime - currentJob.getArrivalTime()));
+                }
                 System.out.println("Currently Working On: " + currentJob);
-                long newTimestamp = System.nanoTime();
                 boolean jobFinished = currentJob.work();
-                executionTime = System.nanoTime() - newTimestamp;
-                waitingTime = System.currentTimeMillis() - lastTimestamp;
-                lastTimestamp = System.currentTimeMillis();
                 if(jobFinished) {
                     System.out.println("Job completed and removed from queue");
+                    System.out.println("The execution time(NS) of that job was: " + (globalTime - currentJob.getTimeAtStart()));
                 } else {
                     System.out.println("Job was not completed, placing in queue");
                     scheduler.push(currentJob);
                 }
-                System.out.println("The execution time(NS) of that job was: " + executionTime);
-                System.out.println("The waiting time(MS) of that job was: " + waitingTime);
                 System.out.println("-----------------------------------------");
             }
         }
@@ -78,7 +77,7 @@ public class JobScheduler extends PriorityQueue<Job> {
             } else {
                 boolean jobAvailable = waitList.get(0).getArrivalTime() <= globalTime;
                 while(jobAvailable) {
-                    lastTimestamp = System.currentTimeMillis();
+                    waitList.get(0).setArrivalTime(globalTime);
                     scheduler.push(waitList.remove(0));
                     jobAvailable = (!waitList.isEmpty() && waitList.get(0).getArrivalTime() <= globalTime);
                 }
